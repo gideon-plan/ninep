@@ -3,7 +3,8 @@
 {.experimental: "strict_funcs".}
 
 import std/[unittest, os]
-import ninep/[wire, client, server, passthrough, lattice]
+import basis/code/choice
+import ninep/[wire, client, server, passthrough]
 
 const pt_port = 42010
 const test_dir = "/tmp/ninep_test"

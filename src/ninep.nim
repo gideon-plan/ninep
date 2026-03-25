@@ -2,5 +2,5 @@
 
 {.experimental: "strict_funcs".}
 
-import ninep/[wire, msg, transport, fs, memfs, passthrough, client, server, lattice]
-export wire, msg, transport, fs, memfs, passthrough, client, server, lattice
+import ninep/[wire, msg, transport, fs, memfs, passthrough, client, server]
+export wire, msg, transport, fs, memfs, passthrough, client, server

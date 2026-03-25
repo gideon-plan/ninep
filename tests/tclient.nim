@@ -3,7 +3,8 @@
 {.experimental: "strict_funcs".}
 
 import std/[unittest, os]
-import ninep/[wire, client, server, memfs, lattice]
+import basis/code/choice
+import ninep/[wire, client, server, memfs]
 
 const test_port = 42000
 

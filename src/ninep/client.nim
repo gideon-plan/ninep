@@ -3,7 +3,8 @@
 {.experimental: "strict_funcs".}
 
 import std/tables
-import wire, msg, transport, lattice
+import basis/code/choice
+import wire, msg, transport
 
 # =====================================================================================================================
 # Types
@@ -72,7 +73,7 @@ proc connect*(host: string, port: int, aname: string = "",
 # Operations
 # =====================================================================================================================
 
-proc walk*(c: NinepClient, names: seq[string]): Result[(uint32, seq[Qid]), NinepError] =
+proc walk*(c: NinepClient, names: seq[string]): Choice[(uint32, seq[Qid])] =
   ## Walk from root. Returns (new_fid, qids).
   let newfid = c.alloc_fid()
   let m = Msg9(mtype: Twalk, tag: c.alloc_tag(), walk_fid: c.root_fid,
@@ -83,87 +84,87 @@ proc walk*(c: NinepClient, names: seq[string]): Result[(uint32, seq[Qid]), Ninep
     check_error(r)
     if r.walk_qids.len > 0:
       c.fid_qids[newfid] = r.walk_qids[^1]
-    Result[(uint32, seq[Qid]), NinepError].good((newfid, r.walk_qids))
+    good((newfid, r.walk_qids))
   except NinepError as e:
-    Result[(uint32, seq[Qid]), NinepError].bad(e[])
+    bad[(uint32, seq[Qid])]("ninep", e.msg)
 
-proc open*(c: NinepClient, fid: uint32, mode: uint8 = Oread): Result[(Qid, uint32), NinepError] =
+proc open*(c: NinepClient, fid: uint32, mode: uint8 = Oread): Choice[(Qid, uint32)] =
   let m = Msg9(mtype: Topen, tag: c.alloc_tag(), open_fid: fid, open_mode: mode)
   try:
     send_msg(c.conn, m)
     let r = recv_msg(c.conn)
     check_error(r)
-    Result[(Qid, uint32), NinepError].good((r.open_qid, r.open_iounit))
+    good((r.open_qid, r.open_iounit))
   except NinepError as e:
-    Result[(Qid, uint32), NinepError].bad(e[])
+    bad[(Qid, uint32)]("ninep", e.msg)
 
 proc read*(c: NinepClient, fid: uint32, offset: uint64 = 0,
-           count: uint32 = 8192): Result[string, NinepError] =
+           count: uint32 = 8192): Choice[string] =
   let m = Msg9(mtype: Tread, tag: c.alloc_tag(), read_fid: fid,
                read_offset: offset, read_count: count)
   try:
     send_msg(c.conn, m)
     let r = recv_msg(c.conn)
     check_error(r)
-    Result[string, NinepError].good(r.read_data)
+    good(r.read_data)
   except NinepError as e:
-    Result[string, NinepError].bad(e[])
+    bad[string]("ninep", e.msg)
 
 proc write*(c: NinepClient, fid: uint32, data: string,
-            offset: uint64 = 0): Result[uint32, NinepError] =
+            offset: uint64 = 0): Choice[uint32] =
   let m = Msg9(mtype: Twrite, tag: c.alloc_tag(), write_fid: fid,
                write_offset: offset, write_data: data)
   try:
     send_msg(c.conn, m)
     let r = recv_msg(c.conn)
     check_error(r)
-    Result[uint32, NinepError].good(r.write_count)
+    good(r.write_count)
   except NinepError as e:
-    Result[uint32, NinepError].bad(e[])
+    bad[uint32]("ninep", e.msg)
 
 proc create*(c: NinepClient, fid: uint32, name: string, perm: uint32,
-             mode: uint8 = Ordwr): Result[(Qid, uint32), NinepError] =
+             mode: uint8 = Ordwr): Choice[(Qid, uint32)] =
   let m = Msg9(mtype: Tcreate, tag: c.alloc_tag(), create_fid: fid,
                create_name: name, create_perm: perm, create_mode: mode)
   try:
     send_msg(c.conn, m)
     let r = recv_msg(c.conn)
     check_error(r)
-    Result[(Qid, uint32), NinepError].good((r.created_qid, r.created_iounit))
+    good((r.created_qid, r.created_iounit))
   except NinepError as e:
-    Result[(Qid, uint32), NinepError].bad(e[])
+    bad[(Qid, uint32)]("ninep", e.msg)
 
-proc stat*(c: NinepClient, fid: uint32): Result[Stat9, NinepError] =
+proc stat*(c: NinepClient, fid: uint32): Choice[Stat9] =
   let m = Msg9(mtype: Tstat, tag: c.alloc_tag(), stat_fid: fid)
   try:
     send_msg(c.conn, m)
     let r = recv_msg(c.conn)
     check_error(r)
-    Result[Stat9, NinepError].good(r.stat_data)
+    good(r.stat_data)
   except NinepError as e:
-    Result[Stat9, NinepError].bad(e[])
+    bad[Stat9]("ninep", e.msg)
 
-proc clunk*(c: NinepClient, fid: uint32): Result[void, NinepError] =
+proc clunk*(c: NinepClient, fid: uint32): Choice[bool] =
   let m = Msg9(mtype: Tclunk, tag: c.alloc_tag(), clunk_fid: fid)
   try:
     send_msg(c.conn, m)
     let r = recv_msg(c.conn)
     check_error(r)
     c.fid_qids.del(fid)
-    Result[void, NinepError](ok: true)
+    good(true)
   except NinepError as e:
-    Result[void, NinepError].bad(e[])
+    bad[bool]("ninep", e.msg)
 
-proc remove*(c: NinepClient, fid: uint32): Result[void, NinepError] =
+proc remove*(c: NinepClient, fid: uint32): Choice[bool] =
   let m = Msg9(mtype: Tremove, tag: c.alloc_tag(), remove_fid: fid)
   try:
     send_msg(c.conn, m)
     let r = recv_msg(c.conn)
     check_error(r)
     c.fid_qids.del(fid)
-    Result[void, NinepError](ok: true)
+    good(true)
   except NinepError as e:
-    Result[void, NinepError].bad(e[])
+    bad[bool]("ninep", e.msg)
 
 proc close*(c: NinepClient) {.raises: [].} =
   if c != nil and c.conn != nil:
