@@ -1,5 +1,7 @@
 ## client.nim -- 9P client: version, attach, walk, open, read, write, stat, clunk.
 
+import segfaults
+
 {.experimental: "strict_funcs".}
 
 import std/tables
