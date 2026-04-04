@@ -1,6 +1,6 @@
 # Package
 version       = "0.1.0"
-author        = "Lynn Crees"
+author        = "L. C. Rees"
 description   = "Pure Nim 9P2000 + 9P2000.L client/server"
 license       = "MIT"
 srcDir        = "src"

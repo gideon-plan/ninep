@@ -1,3 +1,4 @@
+{.experimental: "strictFuncs".}
 ## server.nim -- 9P server: accept loop, dispatch T-messages to FileSystem.
 
 import std/[tables, atomics]
